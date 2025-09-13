@@ -7,114 +7,244 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Elite Single-Match Analyst Bot',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      theme: ThemeData.dark().copyWith(
+        primaryColor: Colors.cyanAccent,
+        scaffoldBackgroundColor: const Color(0xFF1a1a1a),
+        cardColor: const Color(0xFF2c2c2c),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white70),
+          titleLarge: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+          labelLarge: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF2c2c2c),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          labelStyle: const TextStyle(color: Colors.white70),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.cyanAccent,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const AnalysisPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class AnalysisPage extends StatefulWidget {
+  const AnalysisPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AnalysisPage> createState() => _AnalysisPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _AnalysisPageState extends State<AnalysisPage> {
+  final _homeController = TextEditingController();
+  final _awayController = TextEditingController();
+  final _leagueController = TextEditingController();
+  final _koTimeController = TextEditingController();
 
-  void _incrementCounter() {
+  bool _isAnalyzing = false;
+  bool _analysisComplete = false;
+  Map<String, dynamic>? _result;
+
+  void _runAnalysis() {
+    final home = _homeController.text;
+    final away = _awayController.text;
+    final league = _leagueController.text;
+    final koTime = _koTimeController.text;
+
+    if (home.isEmpty || away.isEmpty || league.isEmpty || koTime.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all match details.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _isAnalyzing = true;
+      _analysisComplete = false;
+      _result = null;
+    });
+
+    Future.delayed(const Duration(seconds: 4), () {
+      // Simulate a decision on whether to recommend a bet or not
+      final hasActionableBet = (home.hashCode + away.hashCode) % 2 == 0;
+
+      if (hasActionableBet) {
+        _result = {
+          'showBet': true,
+          'betType': 'Asian Handicap',
+          'exactLine': '$home -0.75',
+          'bestOdds': '1.98',
+          'stake': '8',
+          'confidence': '82',
+          'edge': '6.1%',
+          'rationale':
+              'Dominant home xG creation clashes with $away’s poor defensive road record. Sharp money is backing the home side to cover the spread comfortably.',
+        };
+      } else {
+        _result = {
+          'showBet': false,
+          'reason': 'Edge below threshold (4.8%) for $home vs $away match.',
+        };
+      }
+
+      setState(() {
+        _isAnalyzing = false;
+        _analysisComplete = true;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Elite Single-Match Analyst Bot v2.0 🎯'),
+        backgroundColor: const Color(0xFF2c2c2c),
+        elevation: 0,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildInputField(controller: _homeController, label: 'Home Team'),
+            const SizedBox(height: 16),
+            _buildInputField(controller: _awayController, label: 'Away Team'),
+            const SizedBox(height: 16),
+            _buildInputField(controller: _leagueController, label: 'League / Competition'),
+            const SizedBox(height: 16),
+            _buildInputField(controller: _koTimeController, label: 'Kickoff Time (UTC)'),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _isAnalyzing ? null : _runAnalysis,
+              child: const Text('⚡ ACTIVATE ANALYSIS PROTOCOL ⚡'),
+            ),
+            const SizedBox(height: 32),
+            _buildResultWidget(),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buildInputField({required TextEditingController controller, required String label}) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+      ),
+    );
+  }
+
+  Widget _buildResultWidget() {
+    if (_isAnalyzing) {
+      return const Center(
+        child: Column(
+          children: [
+            CircularProgressIndicator(color: Colors.cyanAccent),
+            SizedBox(height: 16),
+            Text(
+              'Conducting surgical-precision analysis...',
+              style: TextStyle(color: Colors.cyanAccent, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!_analysisComplete || _result == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (_result!['showBet'] == true) {
+      return _buildBetTable();
+    } else {
+      return _buildNoActionWidget();
+    }
+  }
+
+  Widget _buildNoActionWidget() {
+    return Card(
+      color: Colors.red.shade900.withOpacity(0.5),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(
+          '🚫 NO ACTION - ${_result!['reason']}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBetTable() {
+    final textTheme = Theme.of(context).textTheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            dataTextStyle: textTheme.bodyMedium,
+            headingTextStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.cyanAccent),
+            columns: const [
+              DataColumn(label: Text('BET TYPE')),
+              DataColumn(label: Text('EXACT LINE')),
+              DataColumn(label: Text('BEST ODDS')),
+              DataColumn(label: Text('STAKE (1-10)')),
+              DataColumn(label: Text('CONFIDENCE')),
+              DataColumn(label: Text('EDGE %')),
+              DataColumn(label: Text('TACTICAL RATIONALE')),
+            ],
+            rows: [
+              DataRow(cells: [
+                DataCell(Text(_result!['betType'])),
+                DataCell(Text(_result!['exactLine'])),
+                DataCell(Text(_result!['bestOdds'])),
+                DataCell(Text(_result!['stake'])),
+                DataCell(Text('${_result!['confidence']}/100')),
+                DataCell(Text(_result!['edge'])),
+                DataCell(
+                  SizedBox(
+                    width: 250, // Constrain width for the rationale
+                    child: Text(
+                      _result!['rationale'],
+                      softWrap: true,
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
